@@ -1,0 +1,17 @@
+# USERS
+# QUESTIONS
+# RESULTS
+
+
+
+
+CREATE_USER_TABLE = '''
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRINARY KEY AUTOINCREMENT,
+        telegram_id INTEGER NOT NULL)
+
+
+
+
+
+'''

@@ -1,25 +1,24 @@
+import asyncio
 import logging
-import asyncio 
 from aiogram import Bot, Dispatcher
-from aiogram.filters import CommandStart
-from aiogram.types import Message
+from aiogram.fsm.storage.memory import MemoryStorage
 
+from src.handlers import router
+from db.database import init_db
+from config import BOT_TOKEN
 
-BOT_TOKEN = "8848875465:AAF45jv4NHguEbWSWS5f1Z-_Gz8Df2G5L8Q"
 
 bot = Bot(token=BOT_TOKEN)
-dp = Dispatcher()
-
-@dp.message(CommandStart())
-async def cmd_start(message: Message):
-    await message.answer("Assalam Aleikym ya tvoi bot")
+dp = Dispatcher(storage=MemoryStorage())     # обработчик входящих обновлений
 
 
 async def main():
-    await dp.start_polling(bot)
+    init_db()
+    dp.include_router(router)
+    await dp.start_polling(bot)     # отправляет запросы на тг-сервер
+
 
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     asyncio.run(main())
-    
