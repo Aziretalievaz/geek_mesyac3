@@ -15,3 +15,11 @@ inline_buttons = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text="Наш сайт", url="https://geeks.kg")],
     [InlineKeyboardButton(text="Начать игру", callback_data="quiz_start")]
 ])
+
+
+replay_buttons = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(
+        text="Играть снова",
+        callback_data="quiz_start"
+    )]
+])

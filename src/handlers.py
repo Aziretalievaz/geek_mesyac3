@@ -5,7 +5,7 @@ from aiogram.fsm.context import FSMContext
 
 from src.state import Quiz
 from src.questions import QUESTIONS
-from src.keyboards import reply_buttons, inline_buttons
+from src.keyboards import reply_buttons, inline_buttons, replay_buttons
 from db.users import get_user, create_user
 
 router = Router()
@@ -58,14 +58,23 @@ async def handle_answer(message: Message, state: FSMContext):
     else:
         await message.answer(f"Неверно. Правильный ответ: {QUESTIONS[index]['a']}")
 
+
     index += 1
+
     if index >= len(QUESTIONS):
-         await message.answer(f"Конец! Счет: {score}/{len(QUESTIONS)}")
-         await state.clear()
+        await message.answer(
+            f"Викторина завершена!\n"
+            f"Твой результат: {score}/{len(QUESTIONS)}",
+            reply_markup=replay_buttons
+        )
+        await state.clear()
+
     else:
         await state.update_data(index=index, score=score)
-        await message.answer(f"Вопрос {index + 1}: {QUESTIONS[index]['q']}")
-
+        await message.answer(
+            f"Вопрос {index + 1}: {QUESTIONS[index]['q']}"
+        )
+  
 
 # @dp.message(F.from_user.id == 1288365917)
 # async def cmd_group(message: Message):
