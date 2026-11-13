@@ -40,9 +40,9 @@ INSERT_USER = 'INSERT OR IGNORE INTO users (telegram_id, username) VALUES (?, ?)
 
 # -- HW --
 
-UPDATE_USER_USERNAME = ''
+UPDATE_USER_USERNAME = 'UPDATE users SET username = ? WHERE telegram_id = ?'
 
-DELETE_USER = ''
+DELETE_USER = 'DELETE FROM users WHERE telegram_id = ?'
 
 # --QUESTIONS--
 

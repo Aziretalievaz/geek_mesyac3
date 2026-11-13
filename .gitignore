@@ -7,3 +7,4 @@ venv
 *.py[cod]
 *$py.class
 db/quiz.db
+*.pyc

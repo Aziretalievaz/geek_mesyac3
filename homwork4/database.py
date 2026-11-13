@@ -8,12 +8,12 @@ from queries import (
     INSERT_QUESTION
 )
 from questions import QUESTIONS
-
+from config import DATABASE
 
 
 
 def get_db():
-    conn = sqlite3.connect("homework.db")
+    conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
     return conn
 
