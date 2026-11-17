@@ -4,9 +4,11 @@ from aiogram.filters import CommandStart, Command
 from aiogram.fsm.context import FSMContext
 
 from src.state import Quiz
-from questions import QUESTIONS
 from src.keyboards import reply_buttons, inline_buttons, replay_buttons
-from users import get_user, create_user, update_user, delete_user
+from db.users import get_user, create_user, update_user, delete_user
+from db.results import save_result
+from db.stats import get_history, get_top, get_hardest
+from db.questions import get_all_questions
 
 router = Router()
 
@@ -37,7 +39,10 @@ async def cmd_help(message: Message):
         "/help - список команд\n"
         "/profile - prosmotr profilya\n"
         "/change_name <novoe_imya> - izmenit imya\n"
-        "/delete_me - udalit profil",
+        "/delete_me - udalit profil\n"
+        "/history - istoriya otvetov\n"
+        "/top - top igrokov\n"
+        "/hardest - samiy slojniy vopros",
         reply_markup=inline_buttons
     )
 
@@ -101,6 +106,55 @@ async def cmd_delete_me(message: Message):
         "Tvoi profil uspeshno udalen iz bazi dannix."
     ) 
 
+@router.message(Command("history"))
+async def cmd_history(message: Message):
+    history = get_history(telegram_id=message.from_user.id)
+
+    if not history:
+        await message.answer("Ответов нет в базе!")
+        return
+
+    text = "Последние ответы:\n\n"
+
+    for i, row in enumerate(history, 1):
+        mark = "Верно" if row["is_correct"] else "Неверно"
+        text += f"{i}. {mark} - {row['question_text']}\n"
+
+    await message.answer(text)
+
+
+@router.message(Command("top"))
+async def cmd_top(message: Message):
+    players = get_top()
+
+    if not players:
+        await message.answer("Otvetov net v baze")
+        return
+
+    text = "Top igrokov:\n\n"
+
+    for i, player in enumerate(players, 1):
+        text += (
+            f"{i}. {player['username']} - "
+            f"{player['correct']}/{player['total']}\n"
+        )
+
+    await message.answer(text)
+
+
+@router.message(Command("hardest"))
+async def cmd_hardest(message: Message):
+    question = get_hardest()
+
+    if not question:
+        await message.answer("Voprosov net v baze")
+        return
+
+    await message.answer(
+        f"Samuy slojniy vopros:\n"
+        f"{question['question_text']}\n"
+        f"Pravilnye otvety: {question['success_rate']}%"
+    )
 
 
 @router.message(F.text == "Корзина")
@@ -110,47 +164,63 @@ async def cmd_group(message: Message):
 
 @router.callback_query(F.data == "quiz_start")
 async def quiz_start(callback: CallbackQuery, state: FSMContext):
-    await callback.answer('Начинаем игру!', show_alert=True)
-    await state.update_data(index=0, score=0)       # сохраняем прогресс
-    await state.set_state(Quiz.waiting_answer)      # переводим в состояние
-    await callback.message.answer(f"Вопрос 1: {QUESTIONS[0]['q']}")
+
+    questions = get_all_questions()
+
+    if not questions:
+        await callback.answer()
+        await callback.message.answer("Voprosov net v baze")
+        return
+
+    await callback.answer("Начинаем игру!", show_alert=True)
+
+    await state.update_data(
+        questions=questions,
+        index=0,
+        score=0
+    )
+
+    await state.set_state(Quiz.waiting_answer)
+
+    await callback.message.answer(
+        f"Вопрос 1: {questions[0]['question_text']}"
+    )
 
 
 @router.message(Quiz.waiting_answer)
 async def handle_answer(message: Message, state: FSMContext):
-
-    if not message.text:
-        await message.answer("plz tekstoviy otvet.")
-        return
-    
     data = await state.get_data()
     index = data["index"]
     score = data["score"]
+    questions = data["questions"]
+    user = get_user(telegram_id=message.from_user.id)
+    q = questions[index] 
 
-    if message.text.lower() == QUESTIONS[index]['a'].lower():
+    is_correct = message.text.lower() == q['correct_answer'].lower()
+    save_result(
+        user_id=user["id"],
+        question_id=q["id"],
+        is_correct=is_correct
+    )
+
+    if is_correct:
         score += 1
         await message.answer("Правильно! +1")
 
     else:
-        await message.answer(f"Неверно. Правильный ответ: {QUESTIONS[index]['a']}")
-
+        await message.answer(f"Неверно. Правильный ответ: {q['correct_answer']}")
 
     index += 1
-
-    if index >= len(QUESTIONS):
+    if index >= len(questions):
         await message.answer(
-            f"Викторина завершена!\n"
-            f"Твой результат: {score}/{len(QUESTIONS)}",
+            f"Конец! Счет: {score}/{len(questions)}",
             reply_markup=replay_buttons
         )
         await state.clear()
-
     else:
         await state.update_data(index=index, score=score)
-        await message.answer(
-            f"Вопрос {index + 1}: {QUESTIONS[index]['q']}"
-        )
-  
+        await message.answer(f"Вопрос {index + 1}: {questions[index]['question_text']}")
+
 
 # @dp.message(F.from_user.id == 1288365917)
 # async def cmd_group(message: Message):

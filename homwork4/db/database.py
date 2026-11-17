@@ -1,6 +1,6 @@
 import sqlite3
 
-from queries import (
+from db.queries import (
     CREATE_USERS_TABLE,
     CREATE_QUESTIONS_TABLE,
     CREATE_RESULTS_TABLE,

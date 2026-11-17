@@ -1,6 +1,6 @@
 
-from database import get_db
-from queries import (
+from db.database import get_db
+from db.queries import (
     GET_USER_BY_TG_ID,
     INSERT_USER,
     UPDATE_USER_USERNAME, 

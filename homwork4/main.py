@@ -4,7 +4,7 @@ import asyncio
 from aiogram import Bot, Dispatcher
 
 from config import BOT_TOKEN
-from database import init_db
+from db.database import init_db
 from src.handlers import router
 
 async def main():

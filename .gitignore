@@ -8,3 +8,4 @@ venv
 *$py.class
 db/quiz.db
 *.pyc
+homework.db
